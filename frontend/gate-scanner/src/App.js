@@ -129,7 +129,7 @@ export default function App() {
         const verifyRes = await verifyApi({ submissionId: res.submission.id });
         if (verifyRes?.tokenNumber) {
           setTokenSent({ tokenNumber: verifyRes.tokenNumber, smsStatus: verifyRes.smsStatus, driverPhone: res.submission.driverPhone });
-          // auto-close popup after 3 seconds and redirect to scanner view
+          // auto-close popup after 30 seconds and redirect to scanner view
           setTimeout(() => {
             setTokenSent(null);
             setSubmission(null);
@@ -137,7 +137,7 @@ export default function App() {
             setScanMode('camera');
             setScanning(true);
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
-          }, 3000);
+          }, 30000);
         } else {
           setError('Failed to send token');
         }
@@ -168,7 +168,7 @@ export default function App() {
       const res = await verifyApi({ submissionId: submission.id });
       if (res?.tokenNumber) {
         setTokenSent({ tokenNumber: res.tokenNumber, smsStatus: res.smsStatus, driverPhone: submission.driverPhone });
-        // auto-close popup and redirect to scanner view after 3s
+        // auto-close popup and redirect to scanner view after 30s
         setTimeout(() => {
           setTokenSent(null);
           setSubmission(null);
@@ -176,7 +176,7 @@ export default function App() {
           setScanMode('camera');
           setScanning(true);
           try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
-        }, 3000);
+        }, 30000);
       } else {
         setError('Failed to send token');
       }

@@ -17,7 +17,10 @@ function getLocalIP() {
 }
 
 const localIP = getLocalIP();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
+
+// Ensure child process (react-scripts) sees the PORT value
+process.env.PORT = port;
 
 console.log('\n╔═══════════════════════════════════════════╗');
 console.log('║   Advanced Vehicle Info System Starting...        ║');
@@ -32,6 +35,7 @@ console.log('╚═════════════════════�
 const child = spawn('react-scripts', ['start'], {
   stdio: 'inherit',
   shell: true,
+  env: process.env,
 });
 
 child.on('error', (error) => {

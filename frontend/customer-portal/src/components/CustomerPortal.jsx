@@ -971,19 +971,26 @@ const CustomerPortal = () => {
   const stepFieldMap = useMemo(
     () => ({
       0: ["customerEmail", "customerPhone", "vehicleNumber", "poNumber"],
-      1: [
-        "driverPhone",
-        "helperPhone",
-        "driverLanguage",
-        "helperName",
-        "driverName",
-        "helperLanguage",
-        "driverAadhar",
-        "helperAadhar",
-      ],
+      1: wantHelper
+        ? [
+            "driverPhone",
+            "helperPhone",
+            "driverLanguage",
+            "helperName",
+            "driverName",
+            "helperLanguage",
+            "driverAadhar",
+            "helperAadhar",
+          ]
+        : [
+            "driverPhone",
+            "driverLanguage",
+            "driverName",
+            "driverAadhar",
+          ],
       2: ["_anyDocument"],
     }),
-    []
+    [wantHelper]
   );
 
   const formatVehicleNumber = (value) =>
@@ -1352,12 +1359,14 @@ const CustomerPortal = () => {
           }
         }
         if (field === "helperPhone") {
+          if (!wantHelper) return; // Skip validation if helper not wanted
           const result = validateHelperPhone(dataSource.helperPhone);
           if (result) {
             validationErrors.helperPhone = result;
           }
         }
         if (field === "helperName") {
+          if (!wantHelper) return; // Skip validation if helper not wanted
           if (!dataSource.helperName || !dataSource.helperName.trim()) {
             validationErrors.helperName = "Helper name is required.";
           } else if (dataSource.helperName.trim().length < 2) {
@@ -1366,6 +1375,7 @@ const CustomerPortal = () => {
           }
         }
         if (field === "helperAadhar") {
+          if (!wantHelper) return; // Skip validation if helper not wanted
           if (!(helperExists && !helperChanged)) {
             const helperIdType = dataSource.helperIdType || "aadhar";
             const helperId = dataSource.helperAadhar?.replace(/\s/g, "").replace(/-/g, "").toUpperCase() || "";
@@ -1399,6 +1409,7 @@ const CustomerPortal = () => {
           validationErrors.driverLanguage = "Driver language is required.";
         }
         if (field === "helperLanguage" && !dataSource.helperLanguage) {
+          if (!wantHelper) return; // Skip validation if helper not wanted
           validationErrors.helperLanguage = "Helper language is required.";
         }
         if (field === "purchaseOrder") {
@@ -1789,6 +1800,19 @@ const CustomerPortal = () => {
 
   const handleNextStep = async () => {
     const currentStepFields = stepFieldMap[currentStep];
+
+    // Clear helper field errors if helper is not wanted
+    if (currentStep === 1 && !wantHelper) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.helperName;
+        delete updated.helperPhone;
+        delete updated.helperAadhar;
+        delete updated.helperLanguage;
+        return updated;
+      });
+    }
+    
     let updatedFormData = { ...formData };
 
     if (currentStep === 0) {
@@ -1800,18 +1824,40 @@ const CustomerPortal = () => {
     }
 
     if (currentStep === 1) {
+      // Clear any helper errors if helper is not wanted
+      if (!wantHelper) {
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated.helperName;
+          delete updated.helperPhone;
+          delete updated.helperAadhar;
+          delete updated.helperLanguage;
+          return updated;
+        });
+      }
+      
       const hasDriverDetails =
         !!savedDriverData ||
         !!((updatedFormData.driverName || "").trim() && updatedFormData.driverPhone);
-      const hasHelperDetails =
-        !wantHelper || // Helper not required if wantHelper is false
-        !!savedHelperData ||
-        !!((updatedFormData.helperName || "").trim() && updatedFormData.helperPhone);
+      
+      // Only validate helper if wantHelper is true
+      const missingItems = [];
+      
+      if (!hasDriverDetails) {
+        missingItems.push("Driver");
+      }
+      
+      if (wantHelper) {
+        const hasHelperDetails =
+          !!savedHelperData ||
+          !!((updatedFormData.helperName || "").trim() && updatedFormData.helperPhone);
+        
+        if (!hasHelperDetails) {
+          missingItems.push("Helper");
+        }
+      }
 
-      if (!hasDriverDetails || !hasHelperDetails) {
-        const missingItems = [];
-        if (!hasDriverDetails) missingItems.push("Driver");
-        if (!hasHelperDetails && wantHelper) missingItems.push("Helper");
+      if (missingItems.length > 0) {
         showPopupMessage(`Add ${missingItems.join(" and ")} Details first`, "warning");
         return;
       }
@@ -1823,6 +1869,11 @@ const CustomerPortal = () => {
           return !Object.values(files).some((arr) =>
             Array.isArray(arr) ? arr.length > 0 : !!arr
           );
+        }
+
+        // Skip helper field validation if wantHelper is false
+        if (!wantHelper && (field === "helperName" || field === "helperPhone" || field === "helperAadhar" || field === "helperLanguage")) {
+          return false;
         }
 
         if (
@@ -2163,269 +2214,284 @@ const CustomerPortal = () => {
     }
 
     if (currentStep === 1) {
-      const step1Errors = {};
+  const step1Errors = {};
 
-      const driverIdType = formData.driverIdType || "aadhar";
-      const driverId = (formData.driverAadhar || "").replace(/\s/g, "").replace(/-/g, "").toUpperCase();
-      const helperIdType = formData.helperIdType || "aadhar";
-      const helperId = (formData.helperAadhar || "").replace(/\s/g, "").replace(/-/g, "").toUpperCase();
+  const driverIdType = formData.driverIdType || "aadhar";
+  const driverId = (formData.driverAadhar || "").replace(/\s/g, "").replace(/-/g, "").toUpperCase();
 
-      if (!formData.driverName || !(formData.driverName || "").trim()) {
-        step1Errors.driverName = "Driver name is required";
-      }
-      if (!formData.driverPhone) {
-        step1Errors.driverPhone = "Driver phone is required";
-      }
+  // Driver validations
+  if (!formData.driverName || !(formData.driverName || "").trim()) {
+    step1Errors.driverName = "Driver name is required";
+  }
+  if (!formData.driverPhone) {
+    step1Errors.driverPhone = "Driver phone is required";
+  }
 
-      // Validate driver ID based on type
-      if (!driverId) {
-        step1Errors.driverAadhar = "Driver ID is required";
-      } else if (driverIdType === "aadhar") {
-        const normalized = normalizeAadharValue(formData.driverAadhar);
-        if (normalized.length !== 12) {
-          step1Errors.driverAadhar = "Driver Aadhar must be exactly 12 digits";
-        }
-      } else if (driverIdType === "voter_id") {
-        if (!/^[A-Z]{3}\d{7}$/.test(driverId)) {
-          step1Errors.driverAadhar = "Voter ID must be in AAA1234567 format";
-        }
-      } else if (driverIdType === "driving_license") {
-        if (driverId.length < 13 || driverId.length > 16) {
-          step1Errors.driverAadhar = "Driving License must be 13-16 characters";
-        }
-      } else if (driverIdType === "pan") {
-        if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(driverId)) {
-          step1Errors.driverAadhar = "PAN must be in AAAAA1234A format";
-        }
-      }
-
-      if (!formData.helperName || !(formData.helperName || "").trim()) {
-        step1Errors.helperName = "Helper name is required";
-      }
-      if (!formData.helperPhone) {
-        step1Errors.helperPhone = "Helper phone is required";
-      }
-
-      // Validate helper ID based on type
-      if (!helperId) {
-        step1Errors.helperAadhar = "Helper ID is required";
-      } else if (helperIdType === "aadhar") {
-        const normalized = normalizeAadharValue(formData.helperAadhar);
-        if (normalized.length !== 12) {
-          step1Errors.helperAadhar = "Helper Aadhar must be exactly 12 digits";
-        }
-      } else if (helperIdType === "voter_id") {
-        if (!/^[A-Z]{3}\d{7}$/.test(helperId)) {
-          step1Errors.helperAadhar = "Voter ID must be in AAA1234567 format";
-        }
-      } else if (helperIdType === "driving_license") {
-        if (helperId.length < 13 || helperId.length > 16) {
-          step1Errors.helperAadhar = "Driving License must be 13-16 characters";
-        }
-      } else if (helperIdType === "pan") {
-        if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(helperId)) {
-          step1Errors.helperAadhar = "PAN must be in AAAAA1234A format";
-        }
-      }
-
-      if (Object.keys(step1Errors).length > 0) {
-        setErrors((prev) => ({ ...prev, ...step1Errors }));
-        showPopupMessage(
-          "Please fill in all driver and helper fields correctly",
-          "warning"
-        );
-        return;
-      }
-
-      const currentDriverHelperData = {
-        driverName: (formData.driverName || "").trim(),
-        driverPhone: formData.driverPhone || "",
-        driverLanguage: formData.driverLanguage || "en",
-        driverAadhar: driverId,
-        driverIdType: driverIdType,
-        helperName: (formData.helperName || "").trim(),
-        helperPhone: formData.helperPhone || "",
-        helperLanguage: formData.helperLanguage || "en",
-        helperAadhar: helperId,
-        helperIdType: helperIdType,
-      };
-
-      const driverIdForSnapshot =
-        typeof savedDriverData?.id === "number"
-          ? savedDriverData.id
-          : typeof allDrivers.find((d) => d.phoneNo === formData.driverPhone)?.id ===
-            "number"
-            ? allDrivers.find((d) => d.phoneNo === formData.driverPhone)?.id
-            : null;
-      const helperIdForSnapshot =
-        typeof savedHelperData?.id === "number"
-          ? savedHelperData.id
-          : typeof allHelpers.find((h) => h.phoneNo === formData.helperPhone)?.id ===
-            "number"
-            ? allHelpers.find((h) => h.phoneNo === formData.helperPhone)?.id
-            : null;
-
-      let nextStep2Snapshot = {
-        ...currentDriverHelperData,
-        driverId: driverIdForSnapshot,
-        helperId: helperIdForSnapshot,
-      };
-
-      const prevStep2Snapshot = lastStep2NextRef.current.snapshot;
-      const step2Unchanged =
-        !!prevStep2Snapshot &&
-        prevStep2Snapshot.driverName === nextStep2Snapshot.driverName &&
-        prevStep2Snapshot.driverPhone === nextStep2Snapshot.driverPhone &&
-        prevStep2Snapshot.driverLanguage === nextStep2Snapshot.driverLanguage &&
-        prevStep2Snapshot.driverAadhar === nextStep2Snapshot.driverAadhar &&
-        prevStep2Snapshot.helperName === nextStep2Snapshot.helperName &&
-        prevStep2Snapshot.helperPhone === nextStep2Snapshot.helperPhone &&
-        prevStep2Snapshot.helperLanguage === nextStep2Snapshot.helperLanguage &&
-        prevStep2Snapshot.helperAadhar === nextStep2Snapshot.helperAadhar &&
-        prevStep2Snapshot.driverId === nextStep2Snapshot.driverId &&
-        prevStep2Snapshot.helperId === nextStep2Snapshot.helperId;
-
-      const hasChanged =
-        !savedDriverHelperData ||
-        !compareDriverHelperData(
-          currentDriverHelperData,
-          savedDriverHelperData
-        );
-
-      let driverHelperSaveFailed = false;
-
-      if (!step2Unchanged && hasChanged) {
-        try {
-          setLoading(true);
-
-          const driverPayload = {
-            name: currentDriverHelperData.driverName,
-            phoneNo: currentDriverHelperData.driverPhone,
-            language: currentDriverHelperData.driverLanguage,
-            uid: currentDriverHelperData.driverAadhar,
-            idType: currentDriverHelperData.driverIdType || "aadhar",
-            type: "Driver",
-          };
-
-          const helperPayload = {
-            name: currentDriverHelperData.helperName,
-            phoneNo: currentDriverHelperData.helperPhone,
-            language: currentDriverHelperData.helperLanguage,
-            uid: currentDriverHelperData.helperAadhar,
-            idType: currentDriverHelperData.helperIdType || "aadhar",
-            type: "Helper",
-          };
-
-          const [driverResponse, helperResponse] = await Promise.all([
-            driversAPI.validateOrCreateDriverInfo(driverPayload),
-            driversAPI.validateOrCreateHelperInfo(helperPayload),
-          ]);
-
-          const savedDriver = driverResponse.data?.driver;
-          const savedHelper = helperResponse.data?.driver;
-          const driverDocs = driverResponse.data?.documents || [];
-          const helperDocs = helperResponse.data?.documents || [];
-
-          if (savedDriver) {
-            setSavedDriverData(savedDriver);
-            setDriverSearch(savedDriver.name || "");
-            setDriverExists(!!savedDriver.uid);
-            setDriverChanged(false);
-            setAllDrivers((prev) => {
-              const withoutSamePhone = (prev || []).filter(
-                (d) => d?.phoneNo !== savedDriver.phoneNo
-              );
-              return [savedDriver, ...withoutSamePhone];
-            });
-            setFormData((prev) => ({
-              ...prev,
-              driverAadhar: savedDriver.uid || prev.driverAadhar,
-              driverIdType: savedDriver.idType || prev.driverIdType,
-            }));
-          }
-
-          if (savedHelper) {
-            setSavedHelperData(savedHelper);
-            setHelperSearch(savedHelper.name || "");
-            setHelperExists(!!savedHelper.uid);
-            setHelperChanged(false);
-            setAllHelpers((prev) => {
-              const withoutSamePhone = (prev || []).filter(
-                (h) => h?.phoneNo !== savedHelper.phoneNo
-              );
-              return [savedHelper, ...withoutSamePhone];
-            });
-            setFormData((prev) => ({
-              ...prev,
-              helperAadhar: savedHelper.uid || prev.helperAadhar,
-              helperIdType: savedHelper.idType || prev.helperIdType,
-            }));
-          }
-
-          nextStep2Snapshot = {
-            ...nextStep2Snapshot,
-            driverId: typeof savedDriver?.id === "number" ? savedDriver.id : null,
-            helperId: typeof savedHelper?.id === "number" ? savedHelper.id : null,
-          };
-
-          if (driverDocs.length > 0 || helperDocs.length > 0) {
-            setFiles((prev) => {
-              const existingDriver = prev.driverAadhar;
-              const existingHelper = prev.helperAadhar;
-
-              const driverArr = Array.isArray(existingDriver)
-                ? existingDriver
-                : existingDriver
-                  ? [existingDriver]
-                  : [];
-              const helperArr = Array.isArray(existingHelper)
-                ? existingHelper
-                : existingHelper
-                  ? [existingHelper]
-                  : [];
-
-              const cleared = {
-                ...prev,
-                driverAadhar: driverArr.filter((f) => !f?.uploaded),
-                helperAadhar: helperArr.filter((f) => !f?.uploaded),
-              };
-
-              const withDriver =
-                driverDocs.length > 0
-                  ? mergeDocuments(cleared, driverDocs, docTypeMapping)
-                  : cleared;
-              return helperDocs.length > 0
-                ? mergeDocuments(withDriver, helperDocs, docTypeMapping)
-                : withDriver;
-            });
-          }
-
-          setSavedDriverHelperData(currentDriverHelperData);
-
-          showPopupMessage(
-            "Driver and Helper info saved successfully",
-            "info"
-          );
-        } catch (error) {
-          console.error("Failed to save driver/helper:", error);
-          showPopupMessage(
-            error.response?.data?.error ||
-            "Failed to save driver/helper info",
-            "warning"
-          );
-
-          driverHelperSaveFailed = true;
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      if (driverHelperSaveFailed) {
-        return;
-      }
-
-      lastStep2NextRef.current.snapshot = nextStep2Snapshot;
+  // Validate driver ID based on type
+  if (!driverId) {
+    step1Errors.driverAadhar = "Driver ID is required";
+  } else if (driverIdType === "aadhar") {
+    const normalized = normalizeAadharValue(formData.driverAadhar);
+    if (normalized.length !== 12) {
+      step1Errors.driverAadhar = "Driver Aadhar must be exactly 12 digits";
     }
+  } else if (driverIdType === "voter_id") {
+    if (!/^[A-Z]{3}\d{7}$/.test(driverId)) {
+      step1Errors.driverAadhar = "Voter ID must be in AAA1234567 format";
+    }
+  } else if (driverIdType === "driving_license") {
+    if (driverId.length < 13 || driverId.length > 16) {
+      step1Errors.driverAadhar = "Driving License must be 13-16 characters";
+    }
+  } else if (driverIdType === "pan") {
+    if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(driverId)) {
+      step1Errors.driverAadhar = "PAN must be in AAAAA1234A format";
+    }
+  }
+
+  // ONLY validate helper if wantHelper is true
+  if (wantHelper) {
+    const helperIdType = formData.helperIdType || "aadhar";
+    const helperId = (formData.helperAadhar || "").replace(/\s/g, "").replace(/-/g, "").toUpperCase();
+
+    if (!formData.helperName || !(formData.helperName || "").trim()) {
+      step1Errors.helperName = "Helper name is required";
+    }
+    if (!formData.helperPhone) {
+      step1Errors.helperPhone = "Helper phone is required";
+    }
+
+    // Validate helper ID based on type
+    if (!helperId) {
+      step1Errors.helperAadhar = "Helper ID is required";
+    } else if (helperIdType === "aadhar") {
+      const normalized = normalizeAadharValue(formData.helperAadhar);
+      if (normalized.length !== 12) {
+        step1Errors.helperAadhar = "Helper Aadhar must be exactly 12 digits";
+      }
+    } else if (helperIdType === "voter_id") {
+      if (!/^[A-Z]{3}\d{7}$/.test(helperId)) {
+        step1Errors.helperAadhar = "Voter ID must be in AAA1234567 format";
+      }
+    } else if (helperIdType === "driving_license") {
+      if (helperId.length < 13 || helperId.length > 16) {
+        step1Errors.helperAadhar = "Driving License must be 13-16 characters";
+      }
+    } else if (helperIdType === "pan") {
+      if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(helperId)) {
+        step1Errors.helperAadhar = "PAN must be in AAAAA1234A format";
+      }
+    }
+  }
+
+  if (Object.keys(step1Errors).length > 0) {
+    setErrors((prev) => ({ ...prev, ...step1Errors }));
+    showPopupMessage(
+      wantHelper 
+        ? "Please fill in all driver and helper fields correctly"
+        : "Please fill in all driver fields correctly",
+      "warning"
+    );
+    return;
+  }
+
+  const currentDriverHelperData = {
+    driverName: (formData.driverName || "").trim(),
+    driverPhone: formData.driverPhone || "",
+    driverLanguage: formData.driverLanguage || "en",
+    driverAadhar: driverId,
+    driverIdType: driverIdType,
+    helperName: wantHelper ? (formData.helperName || "").trim() : "",
+    helperPhone: wantHelper ? (formData.helperPhone || "") : "",
+    helperLanguage: wantHelper ? (formData.helperLanguage || "en") : "en",
+    helperAadhar: wantHelper ? (formData.helperAadhar || "").replace(/\s/g, "").replace(/-/g, "").toUpperCase() : "",
+    helperIdType: wantHelper ? (formData.helperIdType || "aadhar") : "aadhar",
+  };
+
+  const driverIdForSnapshot =
+    typeof savedDriverData?.id === "number"
+      ? savedDriverData.id
+      : typeof allDrivers.find((d) => d.phoneNo === formData.driverPhone)?.id ===
+        "number"
+        ? allDrivers.find((d) => d.phoneNo === formData.driverPhone)?.id
+        : null;
+  const helperIdForSnapshot = wantHelper
+    ? (typeof savedHelperData?.id === "number"
+        ? savedHelperData.id
+        : typeof allHelpers.find((h) => h.phoneNo === formData.helperPhone)?.id ===
+          "number"
+          ? allHelpers.find((h) => h.phoneNo === formData.helperPhone)?.id
+          : null)
+    : null;
+
+  let nextStep2Snapshot = {
+    ...currentDriverHelperData,
+    driverId: driverIdForSnapshot,
+    helperId: helperIdForSnapshot,
+  };
+
+  const prevStep2Snapshot = lastStep2NextRef.current.snapshot;
+  const step2Unchanged =
+    !!prevStep2Snapshot &&
+    prevStep2Snapshot.driverName === nextStep2Snapshot.driverName &&
+    prevStep2Snapshot.driverPhone === nextStep2Snapshot.driverPhone &&
+    prevStep2Snapshot.driverLanguage === nextStep2Snapshot.driverLanguage &&
+    prevStep2Snapshot.driverAadhar === nextStep2Snapshot.driverAadhar &&
+    prevStep2Snapshot.helperName === nextStep2Snapshot.helperName &&
+    prevStep2Snapshot.helperPhone === nextStep2Snapshot.helperPhone &&
+    prevStep2Snapshot.helperLanguage === nextStep2Snapshot.helperLanguage &&
+    prevStep2Snapshot.helperAadhar === nextStep2Snapshot.helperAadhar &&
+    prevStep2Snapshot.driverId === nextStep2Snapshot.driverId &&
+    prevStep2Snapshot.helperId === nextStep2Snapshot.helperId;
+
+  const hasChanged =
+    !savedDriverHelperData ||
+    !compareDriverHelperData(
+      currentDriverHelperData,
+      savedDriverHelperData
+    );
+
+  let driverHelperSaveFailed = false;
+
+  if (!step2Unchanged && hasChanged) {
+    try {
+      setLoading(true);
+
+      const driverPayload = {
+        name: currentDriverHelperData.driverName,
+        phoneNo: currentDriverHelperData.driverPhone,
+        language: currentDriverHelperData.driverLanguage,
+        uid: currentDriverHelperData.driverAadhar,
+        idType: currentDriverHelperData.driverIdType || "aadhar",
+        type: "Driver",
+      };
+
+      // Only create helper payload if wantHelper is true
+      const apiCalls = [driversAPI.validateOrCreateDriverInfo(driverPayload)];
+      
+      if (wantHelper) {
+        const helperPayload = {
+          name: currentDriverHelperData.helperName,
+          phoneNo: currentDriverHelperData.helperPhone,
+          language: currentDriverHelperData.helperLanguage,
+          uid: currentDriverHelperData.helperAadhar,
+          idType: currentDriverHelperData.helperIdType || "aadhar",
+          type: "Helper",
+        };
+        apiCalls.push(driversAPI.validateOrCreateHelperInfo(helperPayload));
+      }
+
+      const responses = await Promise.all(apiCalls);
+      const driverResponse = responses[0];
+      const helperResponse = wantHelper ? responses[1] : null;
+
+      const savedDriver = driverResponse.data?.driver;
+      const savedHelper = helperResponse?.data?.driver || null;
+      const driverDocs = driverResponse.data?.documents || [];
+      const helperDocs = helperResponse?.data?.documents || [];
+
+      if (savedDriver) {
+        setSavedDriverData(savedDriver);
+        setDriverSearch(savedDriver.name || "");
+        setDriverExists(!!savedDriver.uid);
+        setDriverChanged(false);
+        setAllDrivers((prev) => {
+          const withoutSamePhone = (prev || []).filter(
+            (d) => d?.phoneNo !== savedDriver.phoneNo
+          );
+          return [savedDriver, ...withoutSamePhone];
+        });
+        setFormData((prev) => ({
+          ...prev,
+          driverAadhar: savedDriver.uid || prev.driverAadhar,
+          driverIdType: savedDriver.idType || prev.driverIdType,
+        }));
+      }
+
+      if (wantHelper && savedHelper) {
+        setSavedHelperData(savedHelper);
+        setHelperSearch(savedHelper.name || "");
+        setHelperExists(!!savedHelper.uid);
+        setHelperChanged(false);
+        setAllHelpers((prev) => {
+          const withoutSamePhone = (prev || []).filter(
+            (h) => h?.phoneNo !== savedHelper.phoneNo
+          );
+          return [savedHelper, ...withoutSamePhone];
+        });
+        setFormData((prev) => ({
+          ...prev,
+          helperAadhar: savedHelper.uid || prev.helperAadhar,
+          helperIdType: savedHelper.idType || prev.helperIdType,
+        }));
+      }
+
+      nextStep2Snapshot = {
+        ...nextStep2Snapshot,
+        driverId: typeof savedDriver?.id === "number" ? savedDriver.id : null,
+        helperId: wantHelper && savedHelper && typeof savedHelper?.id === "number" ? savedHelper.id : null,
+      };
+
+      if (driverDocs.length > 0 || helperDocs.length > 0) {
+        setFiles((prev) => {
+          const existingDriver = prev.driverAadhar;
+          const existingHelper = prev.helperAadhar;
+
+          const driverArr = Array.isArray(existingDriver)
+            ? existingDriver
+            : existingDriver
+              ? [existingDriver]
+              : [];
+          const helperArr = Array.isArray(existingHelper)
+            ? existingHelper
+            : existingHelper
+              ? [existingHelper]
+              : [];
+
+          const cleared = {
+            ...prev,
+            driverAadhar: driverArr.filter((f) => !f?.uploaded),
+            helperAadhar: helperArr.filter((f) => !f?.uploaded),
+          };
+
+          const withDriver =
+            driverDocs.length > 0
+              ? mergeDocuments(cleared, driverDocs, docTypeMapping)
+              : cleared;
+          return helperDocs.length > 0
+            ? mergeDocuments(withDriver, helperDocs, docTypeMapping)
+            : withDriver;
+        });
+      }
+
+      setSavedDriverHelperData(currentDriverHelperData);
+
+      showPopupMessage(
+        wantHelper 
+          ? "Driver and Helper info saved successfully"
+          : "Driver info saved successfully",
+        "info"
+      );
+    } catch (error) {
+      console.error("Failed to save driver/helper:", error);
+      showPopupMessage(
+        error.response?.data?.error ||
+        (wantHelper ? "Failed to save driver/helper info" : "Failed to save driver info"),
+        "warning"
+      );
+
+      driverHelperSaveFailed = true;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (driverHelperSaveFailed) {
+    return;
+  }
+
+  lastStep2NextRef.current.snapshot = nextStep2Snapshot;
+}
 
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
