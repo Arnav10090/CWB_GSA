@@ -31,26 +31,6 @@ This project comprises **two integrated React applications** with separate Djang
 
 1. **Customer Web Portal** - Allows customers to pre-register vehicles, drivers, and documents to generate secure QR codes
 2. **Gate Scanner App** - Enables gate personnel to scan QR codes, verify information, and manage vehicle entry
-
-### System Flow
-
-```mermaid
-graph LR
-    A[Customer] -->|Submits Info| B[Customer Portal]
-    B -->|Generates| C[QR Code]
-    C -->|Scanned at Gate| D[Gate Scanner App]
-    D -->|Verifies| E[Backend API]
-    E -->|Updates| F[(PostgreSQL DB)]
-    D -->|Grants/Denies| G[Vehicle Entry]
-    
-    style B fill:#61dafb,stroke:#333,stroke-width:2px
-    style D fill:#61dafb,stroke:#333,stroke-width:2px
-    style E fill:#092e20,stroke:#333,stroke-width:2px
-    style F fill:#336791,stroke:#333,stroke-width:2px
-```
-
-
-
 ---
 
 ## 💻 Technology Stack
@@ -342,35 +322,10 @@ Customer-web-portal/
 └── .gitignore
 ```
 
-
-
-
-
-
-
----
-
-## 📄 License
-
-This project is part of a proprietary customer portal system for secure gate entry management. All rights reserved.
-
----
-
-## 📚 Additional Resources
-
-- [React Documentation](https://react.dev)
-- [Django Documentation](https://docs.djangoproject.com/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [Create React App Documentation](https://create-react-app.dev/)
-
 ---
 
 <div align="center">
 
-**Built with ❤️ for efficient and secure gate management**
-
-⭐ Star this repository if you find it helpful!
+**Built with ❤️ By Arnav Tiwari**
 
 </div>
