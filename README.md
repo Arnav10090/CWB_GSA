@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 Customer Web Portal & Gate Scanner App
+# 🚀 Advanced Vehicle Info System & Gate Scanner App
 
 [![React](https://img.shields.io/badge/React-19.2.0-61dafb?logo=react&logoColor=white)](https://react.dev)
 [![Django](https://img.shields.io/badge/Django-4.2%20%7C%205.0-092e20?logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -19,7 +19,7 @@
 - [Technology Stack](#-technology-stack)
 - [Quick Start](#-quick-start)
   - [Prerequisites](#prerequisites)
-  - [Customer Web Portal Setup](#1-customer-web-portal-setup)
+  - [Advanced Vehicle Info System Setup](#1-advanced-vehicle-info-system-setup)
   - [Gate Scanner App Setup](#2-gate-scanner-app-setup)
 - [Project Structure](#-project-structure)
 
@@ -29,7 +29,7 @@
 
 This project comprises **two integrated React applications** with separate Django backends, designed to streamline and secure facility gate entry operations:
 
-1. **Customer Web Portal** - Allows customers to pre-register vehicles, drivers, and documents to generate secure QR codes
+1. **Advanced Vehicle Info System** - Allows customers to pre-register vehicles, drivers, and documents to generate secure QR codes
 2. **Gate Scanner App** - Enables gate personnel to scan QR codes, verify information, and manage vehicle entry
 ---
 
@@ -73,7 +73,7 @@ Before you begin, ensure you have the following installed:
 - **npm** or **yarn** - Comes with Node.js
 - **pip** - Python package installer
 
-### 1️⃣ Customer Web Portal Setup
+### 1️⃣ Advanced Vehicle Info System Setup
 
 #### Backend Setup
 
@@ -168,7 +168,7 @@ Before you begin, ensure you have the following installed:
    npm start
    ```
 
-   ✅ Customer Portal should now be running at `http://localhost:3000`
+   ✅ Advanced Vehicle Info System should now be running at `http://localhost:3000`
 
 ---
 
@@ -268,7 +268,7 @@ Before you begin, ensure you have the following installed:
 ```
 Customer-web-portal/
 ├── frontend/
-│   ├── customer-portal/          # Customer Web Portal React App
+│   ├── customer-portal/          # Advanced Vehicle Info System React App
 │   │   ├── public/
 │   │   │   └── Customer_docs/    # Customer documentation PDFs
 │   │   ├── src/
@@ -292,7 +292,7 @@ Customer-web-portal/
 │       └── tailwind.config.js
 │
 ├── backend/
-│   ├── customer_portal_backend/   # Customer Portal Django Backend
+│   ├── customer_portal_backend/   # Advanced Vehicle Info System Django Backend
 │   │   ├── customer_portal/       # Main project settings
 │   │   ├── authentication/        # Authentication app
 │   │   ├── submissions/           # Submissions management
