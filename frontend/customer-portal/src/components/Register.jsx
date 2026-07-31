@@ -130,8 +130,8 @@ const Register = ({ onSwitchToLogin }) => {
       <div className="w-full max-w-md">
         <div className="rounded-2xl bg-white p-8 shadow-xl">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <Truck className="h-6 w-6 text-blue-600" aria-hidden="true" />
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="AVIS Logo" className="h-full w-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Advanced Vehicle Info System</h1>
           </div>

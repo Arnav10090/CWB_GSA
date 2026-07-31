@@ -3058,8 +3058,8 @@ const CustomerPortal = () => {
           <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
-                  <Truck className="h-7 w-7 text-blue-600" aria-hidden="true" />
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden">
+                  <img src="/logo.png" alt="AVIS Logo" className="h-full w-full object-contain" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">

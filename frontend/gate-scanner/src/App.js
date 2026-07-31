@@ -9,8 +9,10 @@ function Header({ onLogout, isLoggedIn }) {
   return (
     <header className="w-full bg-white border-b relative z-0">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Scan className="w-6 h-6 text-blue-600" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden">
+            <img src="/logo.png" alt="Gate Scanner Logo" className="h-full w-full object-contain" />
+          </div>
           <h1 className="text-lg md:text-xl font-semibold">Gate Scanner</h1>
         </div>
         {isLoggedIn ? (
